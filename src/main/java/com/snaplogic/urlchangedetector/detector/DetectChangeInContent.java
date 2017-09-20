@@ -14,8 +14,18 @@ import org.jdom2.output.XMLOutputter;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.safety.Whitelist;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.xml.sax.InputSource;
+import org.xmlunit.builder.DiffBuilder;
+import org.xmlunit.diff.Diff;
+import org.xmlunit.diff.Difference;
 
+import com.snaplogic.urlchangedetector.notifier.JavaMailNotifier;
+
+import info.debatty.java.stringsimilarity.Cosine;
+
+@Component
 public class DetectChangeInContent extends TimerTask {
 
 	private Logger logger = Logger.getLogger(DetectChangeInContent.class);
@@ -25,9 +35,17 @@ public class DetectChangeInContent extends TimerTask {
 	private String url;
 	
 	private XMLOutputter outputter = new XMLOutputter();
+	
+	private String emailNotificationReceipientAddress;
+	
+	private Cosine cosineComparator = new Cosine();
+	
+	@Autowired
+	private JavaMailNotifier emailNotifier;
 
-	public void init(String url) {
+	public void init(String url, String emailNotificationReceipientAddress) {
 		this.url = url;
+		this.emailNotificationReceipientAddress = emailNotificationReceipientAddress;
 		
         Format newFormat = outputter.getFormat();
         String encoding = "UTF-8";
@@ -71,6 +89,14 @@ public class DetectChangeInContent extends TimerTask {
 			archivedXmlContent = currentWebPageXmlContent;
 			return;
 		}
+		
+//		Diff myDiff = DiffBuilder.compare(archivedXmlContent).withTest(currentWebPageXmlContent).build();
+//		for(Difference difference : myDiff.getDifferences()) {
+//			difference.getResult();
+//		}
+		double distance = cosineComparator.distance(archivedXmlContent, currentWebPageXmlContent);
+		emailNotifier.sendSimpleMessage(emailNotificationReceipientAddress, "change detected", "changes detected");
+		System.out.println("distance between the current vs archived = " + distance);
 	}
 
 }

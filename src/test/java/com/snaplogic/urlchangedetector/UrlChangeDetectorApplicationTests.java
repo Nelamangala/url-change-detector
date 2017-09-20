@@ -1,4 +1,4 @@
-package com.snaplogic.urlchangedetector.urlchangedetector;
+package com.snaplogic.urlchangedetector;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
