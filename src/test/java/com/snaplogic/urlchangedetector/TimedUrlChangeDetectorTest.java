@@ -19,7 +19,8 @@ public class TimedUrlChangeDetectorTest {
 	private TimedUrlChangeDetector changeDetector;
 	
 	@Test
-	public void testChangeInWeb() {
+	public void testChangeInWeb() throws InterruptedException {
 		changeDetector.setupTimedUrlChangeDetector("https://news.google.com/news/?ned=us&hl=en#0", "ganesh.sit@gmail.com", TimeUnit.SECONDS.toMillis(5));
+		Thread.sleep(100000000);
 	}
 }

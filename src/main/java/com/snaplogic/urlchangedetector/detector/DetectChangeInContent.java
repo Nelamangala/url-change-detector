@@ -95,7 +95,7 @@ public class DetectChangeInContent extends TimerTask {
 //			difference.getResult();
 //		}
 		double distance = cosineComparator.distance(archivedXmlContent, currentWebPageXmlContent);
-		emailNotifier.sendSimpleMessage(emailNotificationReceipientAddress, "change detected", "changes detected");
+		emailNotifier.sendSimpleMessage(emailNotificationReceipientAddress, "change detected", "changes detected with distance :" + distance);
 		System.out.println("distance between the current vs archived = " + distance);
 	}
 
