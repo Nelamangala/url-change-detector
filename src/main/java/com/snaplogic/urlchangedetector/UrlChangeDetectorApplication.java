@@ -1,4 +1,4 @@
-package com.snaplogic.urlchangedetector.urlchangedetector;
+package com.snaplogic.urlchangedetector;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
