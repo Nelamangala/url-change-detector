@@ -11,7 +11,11 @@ Requires Maven.
 ### Project execution
 
 Execute with below command
+
 `java -jar <jar> <url-to-monitor> <emailNotificationReceipient> <checkIntervalInMillis>`
+
+Example:
+
 ```java -jar target/url-change-detector-0.0.1-SNAPSHOT.jar http://localhost:8081/ ganesh.sit@gmail.com 10000```
 
 
