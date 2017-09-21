@@ -18,6 +18,8 @@ Example:
 
 ```java -jar target/url-change-detector-0.0.1-SNAPSHOT.jar http://localhost:8081/ ganesh.sit@gmail.com 10000```
 
+Kill process to terminate.
+
 
 ### Tool Verification
 Integration test spins up a web container with a page at http://localhost:8080/ that changes its content on every url request. The change detector detects changes on this page and calls mocked up email notifier.
