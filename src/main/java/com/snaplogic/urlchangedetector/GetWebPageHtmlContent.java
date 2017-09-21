@@ -19,7 +19,6 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.safety.Whitelist;
-import org.openqa.selenium.chrome.ChromeDriver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
@@ -29,7 +28,7 @@ public class GetWebPageHtmlContent {
 
 		try {
 //			Document doc = Jsoup.connect("https://www.amazon.com/Gerber-Three-Piece-Cardigan-Diaper-Watermelon/dp/B018T3OL04/ref=br_asw_pdt-2?pf_rd_m=ATVPDKIKX0DER&pf_rd_s=&pf_rd_r=GYFCB6ENF9QXJH3YT0TY&pf_rd_t=36701&pf_rd_p=42d0df3a-0efe-4b59-9b69-87c0d382942d&pf_rd_i=desktop").get();
-			Document doc = Jsoup.connect("https://news.google.com/news/?ned=us&hl=en#0").get();
+			Document doc = Jsoup.connect("https://raw.githubusercontent.com/olivierlacan/keep-a-changelog/master/CHANGELOG.md").get();
 			String cleanedHtml = Jsoup.clean(doc.outerHtml(), Whitelist.basic());
 			Document parse = Jsoup.parse(cleanedHtml);
 			String outerHtml = parse.outerHtml();

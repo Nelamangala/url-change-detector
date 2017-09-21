@@ -1,6 +1,8 @@
 package com.snaplogic.urlchangedetector;
 
 import java.util.Timer;
+
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -9,6 +11,8 @@ import com.snaplogic.urlchangedetector.detector.DetectChangeInContent;
 @Component
 public class TimedUrlChangeDetector {
 
+	private Logger logger = Logger.getLogger(TimedUrlChangeDetector.class);
+	
 	@Autowired
 	private DetectChangeInContent changeDetectorTask;
 	
@@ -17,6 +21,6 @@ public class TimedUrlChangeDetector {
 		changeDetectorTask.init(url, emailNotificationReceipient);
         Timer timer = new Timer(true);
         timer.scheduleAtFixedRate(changeDetectorTask, 0, checkIntervalInMillis);
-        System.out.println("TimerTask started");
+        logger.info("TimerTask started");
 	}
 }
