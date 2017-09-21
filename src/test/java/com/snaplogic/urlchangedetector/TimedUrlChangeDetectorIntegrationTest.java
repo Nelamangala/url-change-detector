@@ -6,6 +6,8 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -19,26 +21,34 @@ import com.snaplogic.urlchangedetector.web.WebApp;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = {JavaMailNotifier.class, TimedUrlChangeDetector.class, 
 		DetectChangeInContent.class, WebApp.class})
-public class TimedUrlChangeDetectorTest {
+public class TimedUrlChangeDetectorIntegrationTest {
 
 	@Autowired
 	private TimedUrlChangeDetector changeDetector;
 	
-	private ConfigurableApplicationContext webAppContextForTesting;
+	@Mock
+	private JavaMailNotifier emailNotifierMock;
+	
+	private static ConfigurableApplicationContext webAppContextForTesting;
 	
 	@BeforeClass
-	public void setupChangingWebPage() {
+	public static void setupChangingWebPage() {
+		// Sets up a web page at localhost:8080 that adds random content on every refresh
 		webAppContextForTesting = SpringApplication.run(WebApp.class, new String[0]);
 	}
 	
 	@Test
 	public void testChangeInWeb() throws InterruptedException {
-		changeDetector.setupTimedUrlChangeDetector("http://localhost:8080/", "ganesh.sit@gmail.com", TimeUnit.SECONDS.toMillis(5));
-		Thread.sleep(100000000);
+		changeDetector.getChangeDetectorTask().setEmailNotifier(emailNotifierMock);
+		changeDetector.setupTimedUrlChangeDetector("http://localhost:8080/", "blahblah@gmail.com", TimeUnit.SECONDS.toMillis(1));
+		Thread.sleep(TimeUnit.SECONDS.toMillis(10));
+		// Verifies at least 5 times notification was called during the 10 seconds application ran. Note: Interval is set to 1second
+		Mockito.verify(emailNotifierMock, Mockito.atLeast(5)).sendSimpleMessage(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
 	}
 	
 	@AfterClass
-	public void tearDownWebApp() {
+	public static void tearDownWebApp() throws InterruptedException {
+		// Stops the web page loaded at localhost:8080
 		SpringApplication.exit(webAppContextForTesting);
 	}
 	

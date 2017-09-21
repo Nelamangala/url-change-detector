@@ -1,28 +1,22 @@
 package com.snaplogic.urlchangedetector.detector;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.TimerTask;
 
 import org.apache.log4j.Logger;
-import org.jdom2.JDOMException;
-import org.jdom2.input.SAXBuilder;
-import org.jdom2.output.Format;
-import org.jdom2.output.XMLOutputter;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.safety.Whitelist;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.stereotype.Component;
-import org.xml.sax.InputSource;
-
 import com.snaplogic.urlchangedetector.notifier.JavaMailNotifier;
 
-import info.debatty.java.stringsimilarity.Cosine;
+import info.debatty.java.stringsimilarity.Levenshtein;
 
 @Component
-public class DetectChangeInContent extends TimerTask {
+public class DetectChangeInContent extends TimerTask implements ApplicationListener<ContextClosedEvent>{
 
 	private Logger logger = Logger.getLogger(DetectChangeInContent.class);
 	
@@ -30,11 +24,11 @@ public class DetectChangeInContent extends TimerTask {
 
 	private String url;
 	
-	private XMLOutputter outputter = new XMLOutputter();
-	
 	private String emailNotificationReceipientAddress;
 	
-	private Cosine cosineComparator = new Cosine();
+	private Levenshtein levenshteinDistanceCalculator = new Levenshtein();
+	
+	private int MIN_CHANGE_FOR_NOTIFICATION = 10; // Min changes required to send email notification
 	
 	@Autowired
 	private JavaMailNotifier emailNotifier;
@@ -42,11 +36,6 @@ public class DetectChangeInContent extends TimerTask {
 	public void init(String url, String emailNotificationReceipientAddress) {
 		this.url = url;
 		this.emailNotificationReceipientAddress = emailNotificationReceipientAddress;
-		
-        Format newFormat = outputter.getFormat();
-        String encoding = "UTF-8";
-        newFormat.setEncoding(encoding);
-        outputter.setFormat(newFormat);
 	}
 
 	@Override
@@ -60,39 +49,51 @@ public class DetectChangeInContent extends TimerTask {
 			e.printStackTrace();
 			return;
 		}
-		// Sanitize html retrieved from url above to get rid of tags like script
-		String cleanedHtml = Jsoup.clean(doc.outerHtml(), Whitelist.basic());
-		// Parse back cleaned html to validate its contents and balance missing tags
-		Document parse = Jsoup.parse(cleanedHtml);
-		String completeHtml = parse.outerHtml();
-
-		// Convert html to xml to archive and easy comparison
-		SAXBuilder saxBuilder = new SAXBuilder("org.cyberneko.html.parsers.SAXParser", false);
-
-		org.jdom2.Document jdomDocument = null;
-		try {
-			jdomDocument = saxBuilder.build(
-					new InputSource(new ByteArrayInputStream(completeHtml.getBytes(StandardCharsets.UTF_8.name()))));
-		} catch (JDOMException | IOException e) {
-			logger.error("SaxBuilder failed to convert html into xml with error : " + e.getMessage());
-			e.printStackTrace();
+		
+		Document sanitizedHtml = sanitizeHtml(doc);
+		if(sanitizedHtml == null) {
+			logger.error("Error sanitizing html, abort!");
 			return;
 		}
-
-		String currentWebPageXmlContent = outputter.outputString(jdomDocument);
+		
+		String currentWebPageXmlContent = sanitizedHtml.outerHtml();
 		// First run
 		if(archivedXmlContent == null) {
 			archivedXmlContent = currentWebPageXmlContent;
 			return;
 		}
 		
-//		Diff myDiff = DiffBuilder.compare(archivedXmlContent).withTest(currentWebPageXmlContent).build();
-//		for(Difference difference : myDiff.getDifferences()) {
-//			difference.getResult();
-//		}
-		double distance = cosineComparator.distance(archivedXmlContent, currentWebPageXmlContent);
-		emailNotifier.sendSimpleMessage(emailNotificationReceipientAddress, "change detected", "changes detected with distance :" + distance);
-		System.out.println("distance between the current vs archived = " + distance);
+		compareCurrentVsPrevAndNotify(archivedXmlContent, currentWebPageXmlContent);
+	}
+
+	protected void compareCurrentVsPrevAndNotify(String archivedXmlContent, String currentWebPageXmlContent) {
+		double distance = levenshteinDistanceCalculator.distance(archivedXmlContent, currentWebPageXmlContent);
+		logger.info("distance between the current vs archived = " + distance);
+		double percentageChangeInContent = (distance * 100) / archivedXmlContent.length();
+		if(percentageChangeInContent > MIN_CHANGE_FOR_NOTIFICATION) {
+			emailNotifier.sendSimpleMessage(emailNotificationReceipientAddress, "Change detected",
+					String.format("changes detected in url : %s with distance : %f", url, distance));
+		}
+	}
+
+	protected Document sanitizeHtml(Document doc) {
+		// Sanitize html retrieved from url above to get rid of tags like script
+		String cleanedHtml = Jsoup.clean(doc.outerHtml(), Whitelist.basic());
+		// Parse back cleaned html to validate its contents and balance missing tags
+		return Jsoup.parse(cleanedHtml);
+	}
+
+	public JavaMailNotifier getEmailNotifier() {
+		return emailNotifier;
+	}
+
+	public void setEmailNotifier(JavaMailNotifier emailNotifier) {
+		this.emailNotifier = emailNotifier;
+	}
+
+	@Override
+	public void onApplicationEvent(ContextClosedEvent arg0) {
+		this.cancel();
 	}
 
 }

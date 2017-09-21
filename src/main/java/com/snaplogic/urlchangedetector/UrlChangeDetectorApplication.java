@@ -20,7 +20,7 @@ public class UrlChangeDetectorApplication implements CommandLineRunner{
 	@Override
 	public void run(String... args) throws Exception {
 		if(args.length != 3) {
-			logger.info("Usage : java -jar <jar> com.snaplogic.urlchangedetector.UrlChangeDetectorApplication <url> <emailNotificationReceipient> <checkIntervalInMillis>");
+			logger.info("Usage : java -jar <jar> <url-to-monitor> <emailNotificationReceipient> <checkIntervalInMillis>");
 			return;
 		}
 		timedUrlChangeDetector.setupTimedUrlChangeDetector(args[0], args[1], Long.valueOf(args[2]));

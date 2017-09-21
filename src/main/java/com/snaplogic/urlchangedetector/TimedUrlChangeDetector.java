@@ -23,4 +23,9 @@ public class TimedUrlChangeDetector {
         timer.scheduleAtFixedRate(changeDetectorTask, 0, checkIntervalInMillis);
         logger.info("TimerTask started");
 	}
+
+	public DetectChangeInContent getChangeDetectorTask() {
+		return changeDetectorTask;
+	}
+	
 }
